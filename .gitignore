@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Виртуальное окружение
+venv/
+.venv/
+env/
+
+# Пользовательские настройки (у каждого свои)
+config/settings.json
+
+# Временные файлы
+*.xlsx
+*.xls
+*.tmp

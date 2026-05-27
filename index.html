@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>УСПД → Экспорт</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600&family=Roboto:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #f5f3ee;
+  --paper:       #faf8f3;
+  --ink:         #1c1b18;
+  --ink2:        #6a6860;
+  --ink3:        #aeaca5;
+  --line:        #e2dfd7;
+  --line2:       #ccc9c0;
+  --accent:      #2b7bbf;
+  --accent-dim:  rgba(43,123,191,.10);
+  --accent2:     #5ba3d8;
+  --accent2-dim: rgba(91,163,216,.08);
+  --green:       #3ba55c;
+  --green-dim:   rgba(59,165,92,.10);
+  --yellow:      #faa81a;
+  --yellow-dim:  rgba(250,168,26,.10);
+  --rail:        #2b2d31;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── LAYOUT ── */
+.shell {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: 100vh;
+}
+
+/* ── RAIL ── */
+.rail {
+  background: var(--rail);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.rail-logo {
+  padding: 28px 24px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.rail-logo-line1 {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255,255,255,.35);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.rail-logo-line2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rail-logo-arrow { color: var(--accent2); font-style: normal; }
+
+.rail-nav {
+  flex: 1;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: rgba(255,255,255,.45);
+  transition: all .15s;
+  border: 1px solid transparent;
+  user-select: none;
+}
+.rail-item:hover { color: rgba(255,255,255,.8); background: rgba(255,255,255,.06); }
+.rail-item.active { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.1); color: #fff; font-weight: 500; }
+.rail-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  flex-shrink: 0;
+  transition: background .15s;
+}
+.rail-item.active .rail-dot { background: var(--accent2); }
+
+.rail-footer {
+  padding: 16px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,.25);
+  letter-spacing: .06em;
+}
+
+/* ── MAIN ── */
+.main { background: var(--paper); min-height: 100vh; display: flex; flex-direction: column; }
+
+.topbar {
+  height: 52px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  padding: 0 36px;
+  background: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar-title {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink3);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  flex: 1;
+}
+.topbar-status {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
+  color: var(--ink3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+.content { flex: 1; padding: 36px; max-width: 920px; }
+
+/* ── PANELS ── */
+.panel { display: none; animation: fade-in .18s ease; }
+.panel.active { display: block; }
+@keyframes fade-in { from { opacity: 0; transform: translateX(6px); } to { opacity: 1; transform: none; } }
+
+/* ── SECTION HEADER ── */
+.sec-head { margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.sec-tag {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 8px;
+}
+.sec-title { font-size: 22px; font-weight: 600; letter-spacing: -.4px; margin-bottom: 6px; }
+.sec-desc { font-size: 13px; color: var(--ink2); max-width: 560px; line-height: 1.6; }
+
+/* ── FIELD LABEL ── */
+.field-label {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink2); margin-bottom: 8px;
+}
+.field-hint { font-size: 12px; color: var(--ink3); margin-bottom: 10px; }
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+  display: flex;
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color .15s;
+  max-width: 560px;
+}
+.upload-zone:hover, .upload-zone.drag-over { border-color: var(--accent); }
+.upload-zone.drag-over { background: var(--accent-dim); }
+.upload-btn {
+  padding: 11px 18px;
+  background: var(--rail);
+  border: none;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: #fff; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+  transition: background .15s;
+}
+.upload-btn:hover { background: var(--accent); }
+.upload-zone-meta {
+  padding: 0 16px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px; color: var(--ink3);
+}
+
+/* ── EXPORT ROWS ── */
+.export-list { margin-top: 12px; display: flex; flex-direction: column; gap: 2px; max-width: 860px; }
+
+.export-row {
+  display: grid;
+  grid-template-columns: 1fr 220px 180px 32px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  transition: border-color .12s;
+}
+.export-row:hover { border-color: var(--line2); }
+.export-row.row-loading { opacity: .6; }
+.export-row.row-error { border-color: var(--accent); background: var(--accent-dim); }
+
+.row-file-name {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px; font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.row-label { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+.row-stats { font-family: 'Roboto Mono', monospace; font-size: 11px; color: var(--ink2); margin-top: 3px; }
+
+.inp-field {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--paper);
+  border: 1px solid var(--line2);
+  border-radius: 5px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color .15s;
+}
+.inp-field:focus { border-color: var(--accent); }
+.inp-field::placeholder { color: var(--ink3); }
+.inp-field.inp-err { border-color: var(--accent); background: var(--accent-dim); }
+
+.row-rm {
+  background: none; border: none; cursor: pointer;
+  color: var(--ink3); font-size: 14px;
+  padding: 4px 6px; border-radius: 3px;
+  transition: all .12s; line-height: 1;
+}
+.row-rm:hover { background: var(--accent-dim); color: var(--accent); }
+
+/* ── STATUS BAR ── */
+.status-bar {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  max-width: 560px;
+  border-left: 3px solid transparent;
+  font-family: 'Roboto Mono', monospace;
+}
+.s-idle   { background: var(--accent2-dim); border-color: var(--accent2); color: var(--accent2); }
+.s-ok     { background: var(--green-dim);   border-color: var(--green);   color: var(--green);   }
+.s-warn   { background: var(--yellow-dim);  border-color: var(--yellow);  color: #b07800;        }
+.s-err    { background: var(--accent-dim);  border-color: var(--accent);  color: var(--accent);  }
+
+/* ── BUTTONS ── */
+.act-row { display: flex; gap: 8px; margin-top: 20px; align-items: center; }
+
+.btn-primary {
+  padding: 10px 22px;
+  background: var(--rail);
+  border: none; border-radius: 5px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: #fff; cursor: pointer;
+  transition: background .15s;
+}
+.btn-primary:hover { background: var(--accent); }
+.btn-primary:disabled { background: var(--line2); color: var(--ink3); cursor: not-allowed; }
+
+.btn-ghost {
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid var(--line2); border-radius: 5px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px; font-weight: 500;
+  color: var(--ink2); cursor: pointer;
+  transition: all .15s;
+}
+.btn-ghost:hover { border-color: var(--ink); color: var(--ink); }
+
+.btn-danger {
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid var(--line2); border-radius: 5px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px; font-weight: 500;
+  color: var(--ink3); cursor: pointer;
+  transition: all .15s;
+}
+.btn-danger:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--line); margin: 28px 0; }
+
+/* ── TAGS TAB ── */
+.quick-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.sel-wrap { position: relative; }
+.sel {
+  appearance: none;
+  background: var(--paper);
+  border: 1px solid var(--line2);
+  border-radius: 5px;
+  padding: 9px 36px 9px 14px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px; color: var(--ink);
+  cursor: pointer; outline: none;
+  transition: border-color .15s;
+  min-width: 220px;
+}
+.sel:focus { border-color: var(--accent); }
+.sel-arr {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink3); pointer-events: none; font-size: 10px;
+}
+
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  overflow: hidden;
+  max-width: 600px;
+  margin-bottom: 18px;
+}
+.tag-cell {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  transition: background .1s;
+  user-select: none;
+}
+.tag-cell:hover { background: var(--bg); }
+.tag-cell:nth-child(4n) { border-right: none; }
+.tag-cell.last-row-left  { border-bottom: none; }
+.tag-box {
+  width: 15px; height: 15px;
+  border: 1.5px solid var(--line2);
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 9px; color: transparent;
+  transition: all .12s;
+}
+.tag-cell.checked .tag-box { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tag-cell.checked { background: var(--accent-dim); }
+.tag-text { font-family: 'Roboto Mono', monospace; font-size: 12px; font-weight: 500; color: var(--ink); }
+
+.pills-row { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; align-items: center; margin-bottom: 4px; }
+.pill {
+  padding: 3px 10px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(43,123,191,.3);
+  border-radius: 20px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px; font-weight: 600; color: var(--accent);
+}
+.pills-empty { font-size: 12px; color: var(--ink3); font-family: 'Roboto Mono', monospace; }
+
+.ids-metric {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  padding: 10px 18px;
+  background: var(--bg);
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+.ids-metric-num { font-size: 26px; font-weight: 700; color: var(--ink); }
+.ids-metric-label {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink3);
+}
+
+/* ── SETTINGS TAB ── */
+.sub-head { margin-bottom: 16px; }
+.sub-title { font-size: 15px; font-weight: 600; letter-spacing: -.2px; margin-bottom: 4px; }
+.sub-desc { font-size: 12px; color: var(--ink2); max-width: 560px; line-height: 1.6; }
+
+.dtable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  table-layout: fixed;
+}
+.dtable thead tr { background: var(--bg); }
+.dtable th {
+  padding: 9px 14px;
+  text-align: left;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink3);
+  border-bottom: 1px solid var(--line2);
+  white-space: nowrap;
+}
+.dtable td {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  vertical-align: middle;
+}
+.dtable tbody tr:last-child td { border-bottom: none; }
+.dtable tbody tr:hover { background: var(--bg); }
+
+.td-inp {
+  background: transparent; border: none; outline: none;
+  color: var(--ink); font-family: 'Roboto', sans-serif;
+  font-size: 13px; width: 100%; padding: 0;
+}
+.td-inp.mono { font-family: 'Roboto Mono', monospace; font-size: 12px; }
+.td-inp:focus {
+  background: #fff;
+  padding: 3px 8px; border-radius: 4px;
+  outline: 1.5px solid var(--accent);
+}
+.td-inp::placeholder { color: var(--ink3); }
+
+.td-sel {
+  background: transparent; border: none; outline: none;
+  color: var(--ink); font-family: 'Roboto Mono', monospace;
+  font-size: 11px; width: 100%; padding: 3px 4px;
+  cursor: pointer; border-radius: 4px;
+}
+.td-sel:focus { outline: 1.5px solid var(--accent); background: #fff; }
+
+.check-box {
+  width: 16px; height: 16px; border-radius: 3px;
+  border: 1.5px solid var(--line2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 10px; color: transparent;
+  transition: all .12s; flex-shrink: 0;
+}
+.check-box.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.td-rm {
+  background: none; border: none; cursor: pointer;
+  color: var(--ink3); font-size: 13px; padding: 3px 5px;
+  border-radius: 3px; transition: all .12s;
+}
+.td-rm:hover { background: var(--accent-dim); color: var(--accent); }
+
+.add-row {
+  width: 100%;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px dashed var(--line2);
+  border-radius: 5px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink3); cursor: pointer;
+  transition: all .15s; margin-bottom: 20px;
+}
+.add-row:hover { border-color: var(--ink); color: var(--ink); }
+
+/* ── COLLAPSIBLE ── */
+.coll { border: 1px solid var(--line); border-radius: 5px; overflow: hidden; margin-bottom: 20px; }
+.coll-hd {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 16px; cursor: pointer;
+  font-size: 12px; font-family: 'Roboto Mono', monospace;
+  color: var(--ink2); transition: background .12s; user-select: none;
+}
+.coll-hd:hover { background: var(--bg); }
+.coll-arr { transition: transform .18s; font-size: 10px; }
+.coll.open .coll-arr { transform: rotate(90deg); }
+.coll-body {
+  display: none; padding: 14px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 12px; color: var(--ink2); line-height: 1.8;
+  background: var(--bg);
+}
+.coll.open .coll-body { display: block; }
+
+/* ── SAVE BAR (закреплённая панель) ── */
+.save-bar {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 200px; right: 0;
+  padding: 14px 36px;
+  background: var(--paper);
+  border-top: 1px solid var(--line2);
+  box-shadow: 0 -4px 20px rgba(0,0,0,.07);
+  z-index: 50;
+  gap: 8px;
+  align-items: center;
+}
+.save-bar.visible { display: flex; }
+
+/* Отступ снизу на вкладке настроек чтоб контент не уходил под панель */
+#panel-settings { padding-bottom: 72px; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; right: 28px;
+  padding: 11px 18px;
+  background: var(--rail);
+  border-radius: 5px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px; color: #fff;
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  transform: translateY(60px); opacity: 0;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+  pointer-events: none; z-index: 200;
+}
+.toast.show { transform: none; opacity: 1; }
+
+/* ── SPINNER ── */
+.spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid var(--line2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Widths for settings columns */
+.col-type    { width: 20%; }
+.col-vru     { width: 6%;  }
+.col-preset  { width: 18%; }
+.col-formula { width: 30%; }
+.col-note    { width: 20%; }
+.col-rm      { width: 6%;  }
+.col-name    { width: 44%; }
+.col-code    { width: 44%; }
+
+/* Formula input hint */
+.formula-hint {
+  display: block;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px;
+  color: var(--ink3);
+  margin-top: 2px;
+  letter-spacing: .02em;
+}
+
+/* Formula validation error */
+.td-inp.inp-err { background: var(--accent-dim) !important; outline: 1.5px solid var(--accent) !important; border-radius: 4px; }
+
+/* Formula test row (under formula input) */
+.frm-test {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 5px;
+}
+.frm-test-inp {
+  width: 110px; padding: 3px 7px;
+  background: var(--paper);
+  border: 1px solid var(--line2); border-radius: 3px;
+  font-family: 'Roboto Mono', monospace; font-size: 11px; color: var(--ink);
+  outline: none; transition: border-color .12s; flex-shrink: 0;
+}
+.frm-test-inp:focus { border-color: var(--accent2); }
+.frm-test-inp::placeholder { color: var(--ink3); }
+.test-out {
+  font-family: 'Roboto Mono', monospace; font-size: 11px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.test-ok  { color: var(--green); }
+.test-err { color: var(--accent); }
+
+/* Export cards */
+.export-card {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  transition: border-color .12s;
+  overflow: hidden;
+}
+.export-card:hover { border-color: var(--line2); }
+.export-card.row-loading { opacity: .6; }
+.export-card.row-error { border-color: var(--accent); background: var(--accent-dim); }
+.export-card-top {
+  display: grid;
+  grid-template-columns: 1fr 220px 180px 32px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+}
+.type-tbl-wrap { border-top: 1px solid var(--line); }
+.type-tbl {
+  width: 100%; border-collapse: collapse;
+  font-size: 12px; table-layout: fixed;
+}
+.type-tbl th {
+  padding: 6px 16px; text-align: left;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink3); background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+.type-tbl td {
+  padding: 7px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink); vertical-align: middle;
+}
+.type-tbl tbody tr:last-child td { border-bottom: none; }
+.col-tt-iface { width: 16%; font-family: 'Roboto Mono', monospace; font-size: 11px; color: var(--ink2); }
+.col-tt-name  { width: 22%; }
+.col-tt-addr  { width: 20%; font-family: 'Roboto Mono', monospace; font-size: 11px; color: var(--ink2); }
+.col-tt-comm  { width: 12%; text-align: center; font-family: 'Roboto Mono', monospace; font-size: 11px; }
+.col-tt-cnt   { width: 8%;  font-family: 'Roboto Mono', monospace; color: var(--ink2); text-align: right; }
+.col-tt-tmpl  { width: 22%; }
+.comm-yes { color: var(--green); }
+.comm-no  { color: var(--ink3); }
+.tt-sel {
+  -webkit-appearance: none; appearance: none;
+  background: var(--paper);
+  border: 1px solid var(--line2);
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px; color: var(--ink);
+  cursor: pointer; outline: none;
+  transition: border-color .12s; width: 100%;
+}
+.tt-sel:focus { border-color: var(--accent); }
+.tt-sel.overridden { border-color: var(--accent2); color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── RAIL ── -->
+  <div class="rail">
+    <div class="rail-logo">
+      <div class="rail-logo-line1">АСКУЭ · v2.0</div>
+      <div class="rail-logo-line2">УСПД <i class="rail-logo-arrow">→</i> Export</div>
+    </div>
+    <div class="rail-nav">
+      <div class="rail-item active" id="nav-export" onclick="switchTab('export')">
+        <span class="rail-dot"></span> Экспорт устройств
+      </div>
+      <div class="rail-item" id="nav-tags" onclick="switchTab('tags')">
+        <span class="rail-dot"></span> Теги
+      </div>
+      <div class="rail-item" id="nav-settings" onclick="switchTab('settings')">
+        <span class="rail-dot"></span> Настройки
+      </div>
+    </div>
+    <div class="rail-footer">Связь Инжиниринг М</div>
+  </div>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Экспорт устройств</div>
+      <div class="topbar-status"><span class="status-dot"></span> online</div>
+    </div>
+
+    <div class="content">
+
+      <!-- ══ PANEL 1: ЭКСПОРТ ══ -->
+      <div class="panel active" id="panel-export">
+        <div class="sec-head">
+          <div class="sec-tag">01 / Загрузка</div>
+          <div class="sec-title">Файлы выгрузок</div>
+          <div class="sec-desc">Поддерживаются: RTU / Smart rev.1 (.xls), rev.2 суточный / текущий, rev.3 (.xlsx). Укажите Object:Name и Parent:Id для каждого файла.</div>
+        </div>
+
+        <div class="field-label">Файлы выгрузки</div>
+        <div class="field-hint">Перетащите или нажмите Upload — можно несколько файлов сразу</div>
+
+        <div class="upload-zone" id="export-drop"
+          onclick="document.getElementById('export-input').click()"
+          ondragover="onDragOver(event, this)"
+          ondragleave="onDragLeave(this)"
+          ondrop="onDrop(event, this, handleExportFiles)">
+          <button class="upload-btn" type="button">↑ Upload</button>
+          <span class="upload-zone-meta">XLS / XLSX · несколько файлов</span>
+        </div>
+        <input type="file" id="export-input" accept=".xls,.xlsx" multiple style="display:none"
+          onchange="handleExportFiles(this.files); this.value=''">
+
+        <div class="export-list" id="export-list"></div>
+        <div class="status-bar s-idle" id="export-status">Загрузите файл выгрузки (.xls / .xlsx)</div>
+
+        <div class="act-row" id="export-actions" style="display:none">
+          <button class="btn-primary" id="btn-export" onclick="runExport()">Экспортировать</button>
+          <button class="btn-ghost" onclick="clearExportFiles()">Очистить</button>
+        </div>
+      </div>
+
+      <!-- ══ PANEL 2: ТЕГИ ══ -->
+      <div class="panel" id="panel-tags">
+        <div class="sec-head">
+          <div class="sec-tag">02 / Генерация</div>
+          <div class="sec-title">Теги</div>
+          <div class="sec-desc">Загрузите ids.xlsx (из системы после создания объектов), выберите теги — получите tags_to_load.xlsx.</div>
+        </div>
+
+        <div class="field-label">Файл ids.xlsx</div>
+        <div class="upload-zone" id="ids-drop"
+          onclick="document.getElementById('ids-input').click()"
+          ondragover="onDragOver(event, this)"
+          ondragleave="onDragLeave(this)"
+          ondrop="onDrop(event, this, f => handleIdsFile(f[0]))"
+          style="max-width:400px; margin-bottom:14px">
+          <button class="upload-btn" type="button">↑ Upload</button>
+          <span class="upload-zone-meta" id="ids-zone-meta">XLSX</span>
+        </div>
+        <input type="file" id="ids-input" accept=".xlsx" style="display:none"
+          onchange="handleIdsFile(this.files[0]); this.value=''">
+
+        <div id="ids-metric" style="display:none">
+          <div class="ids-metric">
+            <span class="ids-metric-num" id="ids-count">0</span>
+            <span class="ids-metric-label">устройств</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="field-label" style="margin-bottom:12px">Выбор тегов</div>
+
+        <div class="quick-row">
+          <div class="sel-wrap">
+            <select class="sel" id="tag-preset" onchange="applyPreset(this.value)">
+              <option value="">— вручную —</option>
+            </select>
+            <span class="sel-arr">▾</span>
+          </div>
+        </div>
+
+        <div class="tag-grid" id="tag-grid"></div>
+
+        <div class="field-label" style="margin-bottom:8px">Выбрано</div>
+        <div class="pills-row" id="pills-row">
+          <span class="pills-empty">ничего не выбрано</span>
+        </div>
+
+        <div class="status-bar s-idle" id="tags-status" style="margin-top:16px">Загрузите файл ids.xlsx</div>
+        <div class="act-row" id="tags-actions" style="display:none">
+          <button class="btn-primary" onclick="generateTags()">Сгенерировать tags_to_load.xlsx</button>
+          <button class="btn-ghost" onclick="clearTagSel()">Сбросить выбор</button>
+        </div>
+      </div>
+
+      <!-- ══ PANEL 3: НАСТРОЙКИ ══ -->
+      <div class="panel" id="panel-settings">
+        <div class="sec-head">
+          <div class="sec-tag">03 / Конфигурация</div>
+          <div class="sec-title">Настройки</div>
+          <div class="sec-desc">Реестр типов приборов и коды тегов. Изменения вступают в силу после сохранения.</div>
+        </div>
+
+        <!-- Реестр типов приборов -->
+        <div class="sub-head">
+          <div class="sub-title">Реестр типов приборов</div>
+          <div class="sub-desc">Тип прибора, признак ВРУ, правило извлечения номера квартиры из сетевого адреса.</div>
+        </div>
+
+        <table class="dtable">
+          <thead><tr>
+            <th class="col-type">Название шаблона</th>
+            <th class="col-vru">ВРУ</th>
+            <th class="col-preset">Шаблон</th>
+            <th class="col-formula">Формула  k = f(ad)</th>
+            <th class="col-note">Примечание</th>
+            <th class="col-rm"></th>
+          </tr></thead>
+          <tbody id="dev-tbody"></tbody>
+        </table>
+        <button class="add-row" onclick="addDevRow()">+ добавить тип прибора</button>
+
+        <div class="coll" id="coll-addr">
+          <div class="coll-hd" onclick="toggleColl('coll-addr')">
+            <span class="coll-arr">▶</span> Как писать формулы адресации
+          </div>
+          <div class="coll-body">
+            Переменная <b>ad</b> — сетевой адрес прибора из файла выгрузки (целое число или строка).<br>
+            Результат формулы становится номером квартиры. Используйте тест-поле для проверки.<br><br>
+
+            <b style="color:var(--ink)">Примеры готовых формул:</b><br>
+            <b>ad</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ скопировать адрес (Пульсар 1ф4т: 42 → кв. 42)<br>
+            <b>ad - 2000</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ вычесть базу (СПОДЭС: 2042 → кв. 42)<br>
+            <b>ad.replace("kv", "")</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ убрать kv-префикс (Меркурий 200: kv42 → кв. 42)<br>
+            <b>(ad - 4194304011) // 8 + 1</b> &nbsp;→ специальная адресация (Меркурий 206)<br><br>
+
+            <b style="color:var(--ink)">Арифметические операторы:</b><br>
+            <b>+  -  *  /</b> — сложение, вычитание, умножение, деление (результат float)<br>
+            <b>//</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— целочисленное деление (результат int, без остатка)<br>
+            <b>%</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— остаток от деления<br>
+            <b>**</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— возведение в степень<br><br>
+
+            <b style="color:var(--ink)">Строковые методы</b> (когда ad — строка типа "kv42"):<br>
+            <b>ad.replace("X", "Y")</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— заменить X на Y<br>
+            <b>ad.lstrip("kv")</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— убрать символы слева<br>
+            <b>ad[2:]</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— срез строки с позиции 2<br>
+            <b>int(ad.replace("kv",""))</b> &nbsp;&nbsp;&nbsp;&nbsp;— убрать префикс и преобразовать в число<br><br>
+
+            <b style="color:var(--ink)">Встроенные функции:</b><br>
+            <b>int(ad)</b>, <b>str(ad)</b>, <b>abs(ad)</b>, <b>round(ad)</b> — преобразование типов и округление<br><br>
+
+            Если прибор не найден в реестре — адрес копируется без изменений.<br>
+            Если в файле заполнен <b>Комментарий</b> — он имеет приоритет над формулой.
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Типы тегов -->
+        <div class="sub-head">
+          <div class="sub-title">Типы тегов</div>
+          <div class="sub-desc">Доступны во вкладке «Теги». Название — интерфейс. Код — записывается в tags_to_load.xlsx.</div>
+        </div>
+
+        <table class="dtable">
+          <thead><tr>
+            <th class="col-name">Название</th>
+            <th class="col-code">Код тега</th>
+            <th class="col-rm"></th>
+          </tr></thead>
+          <tbody id="tags-tbody"></tbody>
+        </table>
+        <button class="add-row" onclick="addTagRow()">+ добавить тег</button>
+
+      </div>
+
+      <!-- Закреплённая панель сохранения (видна только на вкладке Настройки) -->
+      <div class="save-bar" id="save-bar">
+        <button class="btn-primary" onclick="saveSettings()">Сохранить настройки</button>
+        <button class="btn-danger" onclick="resetSettings()">Сбросить к умолчаниям</button>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════════════
+   СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+══════════════════════════════════════════════════════ */
+
+let exportFiles  = [];   // [{file, info: {…parse response}, objectName:'', parentId:''}]
+let idsFile      = null;
+let idsCount     = 0;
+let selectedTags = new Set();
+let appSettings  = {};
+
+// Подсказки формул для быстрой вставки
+const FORMULA_PRESETS = [
+  { label: 'Напрямую',        value: 'ad' },
+  { label: 'kv-префикс',     value: 'ad.replace("kv", "")' },
+  { label: 'СПОДЭС −2000',   value: 'ad - 2000' },
+  { label: 'Меркурий 206',   value: '(ad - 4194304011) // 8 + 1' },
+  { label: 'Из комментария', value: '__comment__' },
+];
+
+/* ══════════════════════════════════════════════════════
+   УТИЛИТЫ
+══════════════════════════════════════════════════════ */
+
+let _toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show';
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.className = 'toast', 3200);
+}
+
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function setStatus(id, type, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = `status-bar s-${type}`;
+  el.textContent = msg;
+}
+
+/* ══════════════════════════════════════════════════════
+   ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+══════════════════════════════════════════════════════ */
+
+const TABS   = ['export', 'tags', 'settings'];
+const TITLES = { export: 'Экспорт устройств', tags: 'Теги', settings: 'Настройки' };
+
+function switchTab(t) {
+  TABS.forEach(k => {
+    document.getElementById('nav-' + k).classList.toggle('active', k === t);
+    document.getElementById('panel-' + k).classList.toggle('active', k === t);
+  });
+  document.getElementById('topbar-title').textContent = TITLES[t];
+  document.getElementById('save-bar').classList.toggle('visible', t === 'settings');
+  if (t === 'settings') loadSettings();
+}
+
+/* ══════════════════════════════════════════════════════
+   DRAG & DROP (общий)
+══════════════════════════════════════════════════════ */
+
+function onDragOver(e, zone) {
+  e.preventDefault();
+  zone.classList.add('drag-over');
+}
+function onDragLeave(zone) {
+  zone.classList.remove('drag-over');
+}
+function onDrop(e, zone, handler) {
+  e.preventDefault();
+  zone.classList.remove('drag-over');
+  if (e.dataTransfer.files.length) handler(e.dataTransfer.files);
+}
+
+/* ══════════════════════════════════════════════════════
+   ВКЛАДКА 1: ЭКСПОРТ
+══════════════════════════════════════════════════════ */
+
+async function handleExportFiles(fileList) {
+  const newFiles = Array.from(fileList).filter(
+    f => !exportFiles.find(x => x.file.name === f.name)
+  );
+  if (!newFiles.length) return;
+
+  for (const file of newFiles) {
+    // добавляем placeholder
+    exportFiles.push({ file, info: null, objectName: '', parentId: '', loading: true });
+    renderExportList();
+
+    const fd = new FormData();
+    fd.append('file', file);
+
+    try {
+      const resp = await fetch('/api/parse', { method: 'POST', body: fd });
+      const data = await resp.json();
+      const item = exportFiles.find(x => x.file.name === file.name);
+      if (!item) continue;
+      if (!resp.ok) {
+        item.error = data.error || 'Ошибка разбора';
+      } else {
+        item.info = data;
+      }
+      item.loading = false;
+    } catch {
+      const item = exportFiles.find(x => x.file.name === file.name);
+      if (item) { item.error = 'Ошибка сети'; item.loading = false; }
+    }
+
+    renderExportList();
+  }
+  updateExportStatus();
+}
+
+/* Ищет запись реестра для типа прибора */
+function getProfileForType(typeName) {
+  const dts = appSettings.device_types || [];
+  for (const dt of dts) {
+    const tn = dt.type_name || '';
+    if (tn === typeName || tn.includes(typeName) || typeName.includes(tn)) {
+      return dt;
+    }
+  }
+  return null;
+}
+
+/* Совместимость — оставляем для возможного использования */
+function getFormulaForType(typeName) {
+  const p = getProfileForType(typeName);
+  return p ? (p.formula || 'ad') : null;
+}
+
+/* Собирает formula_overrides из карточки файла */
+function collectFormulaOverrides(idx) {
+  const card = document.querySelector(`.export-card[data-idx="${idx}"]`);
+  if (!card) return {};
+  const overrides = {};
+  card.querySelectorAll('.tt-sel').forEach(sel => {
+    if (sel.value) overrides[sel.dataset.type] = sel.value;
+  });
+  return overrides;
+}
+
+function renderTypesTable(typeCounts, idx) {
+  if (!typeCounts || !typeCounts.length) return '';
+
+  // Строим список шаблонов из реестра приборов + "Из комментария"
+  const dts = appSettings.device_types || [];
+  const profileOpts = dts.map(dt =>
+    `<option value="${esc(dt.formula || 'ad')}">${esc(dt.type_name)}</option>`
+  ).join('');
+  const commentOpt = `<option value="__comment__">Из комментария</option>`;
+
+  const rows = typeCounts.map(tc => {
+    const profile  = getProfileForType(tc.name);
+    const defLabel = profile !== null
+      ? `— ${profile.type_name} —`
+      : '— не в реестре: копировать адрес —';
+    const commVal = tc.with_comments || 0;
+    const commCell = commVal > 0
+      ? `<span class="comm-yes">✓ ${commVal}</span>`
+      : `<span class="comm-no">—</span>`;
+    const addrMin = tc.addr_min ?? '—';
+    const addrMax = tc.addr_max ?? '—';
+    const addrCell = addrMin === addrMax
+      ? String(addrMin)
+      : `${addrMin} – ${addrMax}`;
+    return `<tr>
+      <td class="col-tt-iface">${esc(tc.interface || '—')}</td>
+      <td class="col-tt-name">${esc(tc.name)}</td>
+      <td class="col-tt-addr">${esc(addrCell)}</td>
+      <td class="col-tt-comm">${commCell}</td>
+      <td class="col-tt-cnt">${tc.count}</td>
+      <td class="col-tt-tmpl">
+        <select class="tt-sel" data-type="${esc(tc.name)}"
+          onchange="this.classList.toggle('overridden', !!this.value)">
+          <option value="">${esc(defLabel)}</option>
+          ${profileOpts}
+          ${commentOpt}
+        </select>
+      </td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="type-tbl-wrap">
+    <table class="type-tbl">
+      <thead><tr>
+        <th class="col-tt-iface">Интерфейс</th>
+        <th class="col-tt-name">Тип прибора</th>
+        <th class="col-tt-addr">Адреса (первый – последний)</th>
+        <th class="col-tt-comm">Коммент.</th>
+        <th class="col-tt-cnt">Кол-во</th>
+        <th class="col-tt-tmpl">Шаблон адресации</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function renderExportList() {
+  const list = document.getElementById('export-list');
+  if (!exportFiles.length) { list.innerHTML = ''; return; }
+
+  list.innerHTML = exportFiles.map((item, idx) => {
+    if (item.loading) {
+      return `<div class="export-card row-loading" data-idx="${idx}">
+        <div class="export-card-top">
+          <div><div class="row-file-name">${esc(item.file.name)}</div>
+            <div class="row-label" style="display:flex;align-items:center;gap:8px">
+              <span class="spinner"></span> Определяю формат…
+            </div>
+          </div>
+          <div></div><div></div><div></div>
+        </div>
+      </div>`;
+    }
+    if (item.error) {
+      return `<div class="export-card row-error" data-idx="${idx}">
+        <div class="export-card-top">
+          <div>
+            <div class="row-file-name">${esc(item.file.name)}</div>
+            <div class="row-label" style="color:var(--accent)">${esc(item.error)}</div>
+          </div>
+          <div></div><div></div>
+          <button class="row-rm" onclick="removeExportFile(${idx})">✕</button>
+        </div>
+      </div>`;
+    }
+    const info  = item.info;
+    const parts = [`Кв: <b>${info.count_kv}</b>`];
+    if (info.count_vru)   parts.push(`ВРУ: <b>${info.count_vru}</b>`);
+    if (info.count_no_sn) parts.push(`Нет ответа: <b>${info.count_no_sn}</b>`);
+
+    return `<div class="export-card" data-idx="${idx}">
+      <div class="export-card-top">
+        <div>
+          <div class="row-file-name">${esc(item.file.name)}</div>
+          <div class="row-label">${esc(info.label)}</div>
+          <div class="row-stats">${parts.join(' | ')}</div>
+        </div>
+        <input class="inp-field" placeholder="Object:Name"
+          value="${esc(item.objectName)}"
+          oninput="exportFiles[${idx}].objectName = this.value; updateExportStatus()">
+        <input class="inp-field" placeholder="Parent:Id"
+          value="${esc(item.parentId)}"
+          oninput="exportFiles[${idx}].parentId = this.value; updateExportStatus()">
+        <button class="row-rm" onclick="removeExportFile(${idx})">✕</button>
+      </div>
+      ${renderTypesTable(info.type_counts, idx)}
+    </div>`;
+  }).join('');
+}
+
+function removeExportFile(idx) {
+  exportFiles.splice(idx, 1);
+  renderExportList();
+  updateExportStatus();
+}
+
+function clearExportFiles() {
+  exportFiles = [];
+  renderExportList();
+  updateExportStatus();
+}
+
+function updateExportStatus() {
+  const ready  = exportFiles.filter(f => f.info && !f.error);
+  const allFilled = ready.every(f => f.objectName.trim() && f.parentId.trim());
+  const hasError  = exportFiles.some(f => f.error);
+  const total  = ready.reduce((s, f) => s + f.info.total, 0);
+
+  const actions = document.getElementById('export-actions');
+
+  if (!exportFiles.length) {
+    setStatus('export-status', 'idle', 'Загрузите файл выгрузки (.xls / .xlsx)');
+    actions.style.display = 'none';
+    return;
+  }
+
+  actions.style.display = 'flex';
+
+  if (hasError) {
+    setStatus('export-status', 'err', '⚠ Один или несколько файлов не распознаны');
+  } else if (!allFilled) {
+    setStatus('export-status', 'warn', 'Заполните Object:Name и Parent:Id для всех файлов');
+  } else {
+    setStatus('export-status', 'ok', `✓ Готово к экспорту — ${total} приборов в ${ready.length} файл(ах)`);
+  }
+
+  document.getElementById('btn-export').disabled =
+    !ready.length || !allFilled || exportFiles.some(f => f.loading);
+}
+
+async function runExport() {
+  const ready = exportFiles.filter(f => f.info && !f.error);
+  if (!ready.length) return;
+
+  const fd   = new FormData();
+  const meta = ready.map(item => {
+    const idx = exportFiles.indexOf(item);
+    return {
+      filename:          item.file.name,
+      object_name:       item.objectName.trim(),
+      parent_id:         item.parentId.trim(),
+      formula_overrides: collectFormulaOverrides(idx),
+    };
+  });
+  fd.append('meta', JSON.stringify(meta));
+  ready.forEach(item => fd.append('files', item.file));
+
+  document.getElementById('btn-export').disabled = true;
+  setStatus('export-status', 'idle', 'Формируем export.xlsx…');
+
+  try {
+    const resp = await fetch('/api/export', { method: 'POST', body: fd });
+    if (!resp.ok) {
+      const err = await resp.json();
+      setStatus('export-status', 'err', '⚠ ' + (err.error || 'Ошибка сервера'));
+      return;
+    }
+    const blob = await resp.blob();
+    downloadBlob(blob, 'export.xlsx');
+    const total = ready.reduce((s, f) => s + f.info.total, 0);
+    setStatus('export-status', 'ok', `✓ Экспорт завершён — ${total} приборов`);
+    showToast('✓ export.xlsx скачан');
+  } catch (e) {
+    setStatus('export-status', 'err', '⚠ Ошибка сети: ' + e.message);
+  } finally {
+    document.getElementById('btn-export').disabled = false;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   ВКЛАДКА 2: ТЕГИ
+══════════════════════════════════════════════════════ */
+
+async function handleIdsFile(file) {
+  if (!file) return;
+
+  const metaEl = document.getElementById('ids-zone-meta');
+  metaEl.textContent = file.name;
+  document.getElementById('ids-metric').style.display = 'none';
+  setStatus('tags-status', 'idle', 'Читаю ids.xlsx…');
+
+  const fd = new FormData();
+  fd.append('ids', file);
+
+  try {
+    const resp = await fetch('/api/ids-info', { method: 'POST', body: fd });
+    const data = await resp.json();
+    if (!resp.ok) {
+      setStatus('tags-status', 'err', '⚠ ' + data.error);
+      idsFile = null; return;
+    }
+    idsFile  = file;
+    idsCount = data.count;
+    document.getElementById('ids-count').textContent = data.count;
+    document.getElementById('ids-metric').style.display = '';
+    if (data.mismatch) {
+      setStatus('tags-status', 'warn',
+        `LogicDevices: ${data.count} / Devices: ${data.d_count} — не совпадают!`);
+    } else {
+      updateTagsStatus();
+    }
+  } catch (e) {
+    setStatus('tags-status', 'err', '⚠ Ошибка сети: ' + e.message);
+  }
+}
+
+function buildTagGrid() {
+  const tagTypes = appSettings.tag_types || [];
+  const grid = document.getElementById('tag-grid');
+
+  if (!tagTypes.length) {
+    grid.innerHTML = '<div style="padding:16px;color:var(--ink3);font-size:12px">Нет тегов — добавьте в Настройках</div>';
+    return;
+  }
+
+  const cols = 4;
+  const lastRowStart = Math.floor((tagTypes.length - 1) / cols) * cols;
+
+  grid.innerHTML = tagTypes.map((tt, i) => {
+    const isChecked = selectedTags.has(tt.code);
+    const isLastRow = i >= lastRowStart;
+    return `<div class="tag-cell${isChecked ? ' checked' : ''}${isLastRow ? ' last-row-left' : ''}"
+        onclick="toggleTag('${esc(tt.code)}', '${esc(tt.label)}', this)">
+      <div class="tag-box">${isChecked ? '✓' : ''}</div>
+      <span class="tag-text">${esc(tt.label)}</span>
+    </div>`;
+  }).join('');
+}
+
+function buildPresets() {
+  const sel   = document.getElementById('tag-preset');
+  const presets = appSettings.tag_presets || {};
+  sel.innerHTML = '<option value="">— вручную —</option>' +
+    Object.keys(presets).map(k => `<option value="${esc(k)}">${esc(k)}</option>`).join('');
+}
+
+function toggleTag(code, label, el) {
+  if (selectedTags.has(code)) selectedTags.delete(code);
+  else selectedTags.add(code);
+  el.classList.toggle('checked', selectedTags.has(code));
+  el.querySelector('.tag-box').textContent = selectedTags.has(code) ? '✓' : '';
+  renderPills();
+  updateTagsStatus();
+}
+
+function applyPreset(name) {
+  if (!name) return;
+  const codes = (appSettings.tag_presets || {})[name] || [];
+  selectedTags = new Set(codes);
+  buildTagGrid();
+  renderPills();
+  updateTagsStatus();
+}
+
+function clearTagSel() {
+  selectedTags.clear();
+  document.getElementById('tag-preset').value = '';
+  buildTagGrid();
+  renderPills();
+  updateTagsStatus();
+}
+
+function renderPills() {
+  const row = document.getElementById('pills-row');
+  row.innerHTML = selectedTags.size
+    ? [...selectedTags].map(c => `<span class="pill">${esc(c)}</span>`).join('')
+    : '<span class="pills-empty">ничего не выбрано</span>';
+}
+
+function updateTagsStatus() {
+  const act = document.getElementById('tags-actions');
+  if (!idsFile) {
+    setStatus('tags-status', 'idle', 'Загрузите файл ids.xlsx');
+    act.style.display = 'none'; return;
+  }
+  if (!selectedTags.size) {
+    setStatus('tags-status', 'idle', 'Выберите хотя бы один тег');
+    act.style.display = 'none'; return;
+  }
+  const total = idsCount * selectedTags.size;
+  setStatus('tags-status', 'ok',
+    `✓ Будет создано ${total} строк тегов (${idsCount} устр. × ${selectedTags.size} тегов)`);
+  act.style.display = 'flex';
+}
+
+async function generateTags() {
+  if (!idsFile || !selectedTags.size) return;
+
+  const fd = new FormData();
+  fd.append('ids', idsFile);
+  fd.append('tags', JSON.stringify([...selectedTags]));
+
+  setStatus('tags-status', 'idle', 'Генерируем tags_to_load.xlsx…');
+
+  try {
+    const resp = await fetch('/api/tags', { method: 'POST', body: fd });
+    if (!resp.ok) {
+      const err = await resp.json();
+      setStatus('tags-status', 'err', '⚠ ' + (err.error || 'Ошибка сервера'));
+      return;
+    }
+    const blob = await resp.blob();
+    downloadBlob(blob, 'tags_to_load.xlsx');
+    setStatus('tags-status', 'ok',
+      `✓ Готово — ${idsCount * selectedTags.size} строк тегов`);
+    showToast('✓ tags_to_load.xlsx скачан');
+  } catch (e) {
+    setStatus('tags-status', 'err', '⚠ Ошибка сети: ' + e.message);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   ВКЛАДКА 3: НАСТРОЙКИ
+══════════════════════════════════════════════════════ */
+
+async function loadSettings() {
+  try {
+    const resp = await fetch('/api/settings');
+    appSettings = await resp.json();
+    renderDevTypes();
+    renderTagTypes();
+    buildTagGrid();
+    buildPresets();
+  } catch (e) {
+    showToast('⚠ Не удалось загрузить настройки');
+  }
+}
+
+function renderDevTypes() {
+  const tbody = document.getElementById('dev-tbody');
+  const types = appSettings.device_types || [];
+  tbody.innerHTML = types.map((dt, i) => devTypeRow(dt, i)).join('');
+}
+
+function devTypeRow(dt) {
+  // Обратная совместимость: если formula не задана, конвертируем addr_rule
+  const ruleMap = { kv: 'ad.replace("kv", "")', direct: 'ad', auto_base: 'ad - 2000' };
+  const formula = dt.formula || ruleMap[dt.addr_rule] || 'ad';
+
+  const presOpts = FORMULA_PRESETS.map(p =>
+    `<option value="${esc(p.value)}">${esc(p.label)}</option>`
+  ).join('');
+
+  return `<tr>
+    <td class="col-type">
+      <input class="td-inp" value="${esc(dt.type_name)}" placeholder="Тип прибора">
+    </td>
+    <td class="col-vru" style="text-align:center">
+      <div class="check-box${dt.is_vru ? ' on' : ''}" onclick="tglChk(this)">${dt.is_vru ? '✓' : ''}</div>
+    </td>
+    <td class="col-preset">
+      <select class="td-sel" onchange="fillFormula(this)">
+        <option value="">— выбрать —</option>${presOpts}
+      </select>
+    </td>
+    <td class="col-formula">
+      <input class="td-inp mono formula-inp" value="${esc(formula)}" placeholder="ad">
+      <div class="frm-test">
+        <input class="frm-test-inp" placeholder="тест: введите ad"
+          oninput="runFormulaTest(this)">
+        <span class="test-out"></span>
+      </div>
+    </td>
+    <td class="col-note">
+      <input class="td-inp mono" value="${esc(dt.notes || '')}" placeholder="Примечание">
+    </td>
+    <td class="col-rm"><button class="td-rm" onclick="this.closest('tr').remove()">✕</button></td>
+  </tr>`;
+}
+
+function fillFormula(sel) {
+  if (!sel.value) return;
+  const inp = sel.closest('tr').querySelector('.formula-inp');
+  inp.value = sel.value;
+  sel.value = '';
+  inp.focus();
+}
+
+
+function addDevRow() {
+  const tbody = document.getElementById('dev-tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = devTypeRow({ type_name:'', is_vru:false, formula:'ad', notes:'' });
+  tbody.appendChild(tr);
+  tr.querySelector('input').focus();
+}
+
+function renderTagTypes() {
+  const tbody = document.getElementById('tags-tbody');
+  const types = appSettings.tag_types || [];
+  tbody.innerHTML = types.map(tt => tagTypeRow(tt)).join('');
+}
+
+function tagTypeRow(tt) {
+  return `<tr>
+    <td class="col-name"><input class="td-inp" value="${esc(tt.label)}" placeholder="Название"></td>
+    <td class="col-code"><input class="td-inp mono" value="${esc(tt.code)}" placeholder="Например: A+1"></td>
+    <td class="col-rm"><button class="td-rm" onclick="this.closest('tr').remove()">✕</button></td>
+  </tr>`;
+}
+
+function addTagRow() {
+  const tbody = document.getElementById('tags-tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = tagTypeRow({ label:'', code:'' });
+  tbody.appendChild(tr);
+  tr.querySelector('input').focus();
+}
+
+function validateFormula(formula) {
+  if (!formula || formula.trim() === '') return 'Формула не может быть пустой';
+  const f = formula.trim();
+  if (f === '__comment__') return null;
+  // Блокируем потенциально опасные конструкции
+  const forbidden = ['__import__', '__builtins__', '__class__', 'import ', 'exec(', 'open('];
+  for (const kw of forbidden) {
+    if (f.includes(kw)) return `Запрещённое выражение: ${kw}`;
+  }
+  return null; // Синтаксис проверяется через тест-поле (Python eval на сервере)
+}
+
+/* Тест формулы через сервер (Python eval — корректно для //) */
+async function runFormulaTest(inp) {
+  const tr     = inp.closest('tr');
+  const frmInp = tr.querySelector('.formula-inp');
+  const outEl  = tr.querySelector('.test-out');
+  const formula = frmInp ? frmInp.value.trim() : '';
+  const ad      = inp.value.trim();
+  if (!formula || !ad) { outEl.textContent = ''; return; }
+  try {
+    const resp = await fetch('/api/test-formula', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ formula, ad }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      outEl.textContent = `⚠ ${data.error}`;
+      outEl.className = 'test-out test-err';
+    } else {
+      outEl.textContent = `→ кв. ${data.result}`;
+      outEl.className = 'test-out test-ok';
+    }
+  } catch {
+    outEl.textContent = '⚠ нет связи';
+    outEl.className = 'test-out test-err';
+  }
+}
+
+function tglChk(el) {
+  el.classList.toggle('on');
+  el.textContent = el.classList.contains('on') ? '✓' : '';
+}
+
+function collectDevTypes() {
+  return [...document.querySelectorAll('#dev-tbody tr')].map(tr => {
+    const chk     = tr.querySelector('.check-box');
+    const nameInp = tr.querySelector('td:nth-child(1) input');
+    const frmInp  = tr.querySelector('.formula-inp');
+    const noteInp = tr.querySelector('td:nth-child(5) input');
+    return {
+      type_name: nameInp ? nameInp.value.trim() : '',
+      is_vru:    chk ? chk.classList.contains('on') : false,
+      formula:   frmInp ? (frmInp.value.trim() || 'ad') : 'ad',
+      notes:     noteInp ? noteInp.value.trim() : '',
+    };
+  }).filter(d => d.type_name);
+}
+
+function collectTagTypes() {
+  return [...document.querySelectorAll('#tags-tbody tr')].map(tr => {
+    const inputs = tr.querySelectorAll('input');
+    return { label: inputs[0].value.trim(), code: inputs[1].value.trim() };
+  }).filter(t => t.label && t.code);
+}
+
+async function saveSettings() {
+  // Валидация формул перед сохранением
+  let formulaError = null;
+  document.querySelectorAll('#dev-tbody tr').forEach(tr => {
+    if (formulaError) return;
+    const nameInp = tr.querySelector('td:nth-child(1) input');
+    const frmInp  = tr.querySelector('.formula-inp');
+    const chk     = tr.querySelector('.check-box');
+    const typeName = nameInp ? nameInp.value.trim() : '';
+    const isVru    = chk ? chk.classList.contains('on') : false;
+
+    if (!typeName || isVru) {
+      frmInp && frmInp.classList.remove('inp-err');
+      return;
+    }
+    const formula = frmInp ? (frmInp.value.trim() || 'ad') : 'ad';
+    const err = validateFormula(formula);
+    if (err) {
+      formulaError = { typeName, err };
+      frmInp && frmInp.classList.add('inp-err');
+      frmInp && frmInp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      frmInp && frmInp.classList.remove('inp-err');
+    }
+  });
+
+  if (formulaError) {
+    showToast(`⚠ Некорректная формула "${formulaError.typeName}": ${formulaError.err}`);
+    return;
+  }
+
+  const data = {
+    device_types: collectDevTypes(),
+    tag_types:    collectTagTypes(),
+  };
+  try {
+    const resp = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    appSettings.device_types = data.device_types;
+    appSettings.tag_types    = data.tag_types;
+    buildTagGrid();
+    buildPresets();
+    showToast(`✓ Сохранено: ${data.device_types.length} типов, ${data.tag_types.length} тегов`);
+  } catch (e) {
+    showToast('⚠ Ошибка сохранения: ' + e.message);
+  }
+}
+
+async function resetSettings() {
+  if (!confirm('Сбросить все настройки к умолчаниям?')) return;
+  try {
+    const resp = await fetch('/api/defaults');
+    const defaults = await resp.json();
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        device_types: defaults.device_types,
+        tag_types:    defaults.tag_types,
+      }),
+    });
+    await loadSettings();
+    showToast('✓ Настройки сброшены');
+  } catch (e) {
+    showToast('⚠ Ошибка: ' + e.message);
+  }
+}
+
+function toggleColl(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+/* ══════════════════════════════════════════════════════
+   ВСПОМОГАТЕЛЬНОЕ
+══════════════════════════════════════════════════════ */
+
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* ══════════════════════════════════════════════════════
+   ИНИЦИАЛИЗАЦИЯ
+══════════════════════════════════════════════════════ */
+
+window.addEventListener('load', async () => {
+  await loadSettings();
+});
+</script>
+</body>
+</html>

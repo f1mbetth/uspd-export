@@ -1,0 +1,96 @@
+{
+  "device_types": [
+    {
+      "type_name": "Меркурий 200",
+      "is_vru": false,
+      "formula": "ad.replace(\"kv\", \"\")",
+      "notes": "УМ-31 RTU"
+    },
+    {
+      "type_name": "Меркурий 230",
+      "is_vru": true,
+      "formula": "ad",
+      "notes": "Любая"
+    },
+    {
+      "type_name": "Пульсар 1ф4т",
+      "is_vru": false,
+      "formula": "ad",
+      "notes": "УМ-31 Smart rev.2"
+    },
+    {
+      "type_name": "Пульсар 3ф4т",
+      "is_vru": true,
+      "formula": "ad",
+      "notes": "УМ-31 Smart rev.2"
+    },
+    {
+      "type_name": "Счетчики СПОДЭС",
+      "is_vru": false,
+      "formula": "ad - 2000",
+      "notes": "УМ-31 Smart"
+    },
+    {
+      "type_name": "Меркурий 206",
+      "is_vru": false,
+      "formula": "(ad - 4194304011) // 8 + 1",
+      "notes": "УМ-31 Smart"
+    },
+    {
+      "type_name": "ВРУ",
+      "is_vru": true,
+      "formula": "ad",
+      "notes": "УМ-31 Smart"
+    }
+  ],
+  "tag_types": [
+    {
+      "label": "A0",
+      "code": "A+0"
+    },
+    {
+      "label": "A1",
+      "code": "A+1"
+    },
+    {
+      "label": "A2",
+      "code": "A+2"
+    },
+    {
+      "label": "A3",
+      "code": "A+3"
+    },
+    {
+      "label": "DA0",
+      "code": "DA+0"
+    },
+    {
+      "label": "DA1",
+      "code": "DA+1"
+    },
+    {
+      "label": "DA2",
+      "code": "DA+2"
+    },
+    {
+      "label": "DA3",
+      "code": "DA+3"
+    },
+    {
+      "label": "MA0",
+      "code": "MA+0"
+    },
+    {
+      "label": "MA1",
+      "code": "MA+1"
+    },
+    {
+      "label": "MA2",
+      "code": "MA+2"
+    },
+    {
+      "label": "MA3",
+      "code": "MA+3"
+    }
+  ]
+}
