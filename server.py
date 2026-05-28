@@ -219,6 +219,17 @@ def api_tags():
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     )
 
+# ─── Перезапуск ───────────────────────────────────────────────────────────────
+
+@app.route('/api/restart', methods=['POST'])
+def api_restart():
+    def do_restart():
+        import time
+        time.sleep(0.4)
+        os.execv(sys.executable, [sys.executable] + sys.argv)
+    threading.Thread(target=do_restart, daemon=True).start()
+    return jsonify({'ok': True})
+
 # ─── Запуск ───────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':

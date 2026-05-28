@@ -851,6 +851,7 @@ body {
       <div class="save-bar" id="save-bar">
         <button class="btn-primary" onclick="saveSettings()">Сохранить настройки</button>
         <button class="btn-danger" onclick="resetSettings()">Сбросить к умолчаниям</button>
+        <button class="btn-ghost" onclick="restartServer()" id="btn-restart" style="margin-left:auto">↺ Перезапустить сервер</button>
       </div>
 
     </div><!-- /content -->
@@ -1595,6 +1596,41 @@ function esc(s) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/* ══════════════════════════════════════════════════════
+   ПЕРЕЗАПУСК СЕРВЕРА
+══════════════════════════════════════════════════════ */
+
+async function restartServer() {
+  const btn = document.getElementById('btn-restart');
+  btn.disabled = true;
+  btn.textContent = '↺ Перезапуск…';
+  try {
+    await fetch('api/restart', { method: 'POST' });
+  } catch { /* сервер перезапускается — ошибка сети ожидаема */ }
+
+  // Ждём пока сервер поднимется и пробуем reconnect
+  let attempts = 0;
+  const tryReconnect = setInterval(async () => {
+    attempts++;
+    try {
+      const r = await fetch('api/settings');
+      if (r.ok) {
+        clearInterval(tryReconnect);
+        btn.disabled = false;
+        btn.textContent = '↺ Перезапустить сервер';
+        showToast('✓ Сервер перезапущен');
+        await loadSettings();
+      }
+    } catch { /* ещё не поднялся */ }
+    if (attempts > 30) {
+      clearInterval(tryReconnect);
+      btn.disabled = false;
+      btn.textContent = '↺ Перезапустить сервер';
+      showToast('⚠ Сервер не ответил — проверьте вручную');
+    }
+  }, 500);
 }
 
 /* ══════════════════════════════════════════════════════
