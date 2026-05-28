@@ -966,7 +966,7 @@ async function handleExportFiles(fileList) {
     fd.append('file', file);
 
     try {
-      const resp = await fetch('/api/parse', { method: 'POST', body: fd });
+      const resp = await fetch('api/parse', { method: 'POST', body: fd });
       const data = await resp.json();
       const item = exportFiles.find(x => x.file.name === file.name);
       if (!item) continue;
@@ -1186,7 +1186,7 @@ async function runExport() {
   setStatus('export-status', 'idle', 'Формируем export.xlsx…');
 
   try {
-    const resp = await fetch('/api/export', { method: 'POST', body: fd });
+    const resp = await fetch('api/export', { method: 'POST', body: fd });
     if (!resp.ok) {
       const err = await resp.json();
       setStatus('export-status', 'err', '⚠ ' + (err.error || 'Ошибка сервера'));
@@ -1220,7 +1220,7 @@ async function handleIdsFile(file) {
   fd.append('ids', file);
 
   try {
-    const resp = await fetch('/api/ids-info', { method: 'POST', body: fd });
+    const resp = await fetch('api/ids-info', { method: 'POST', body: fd });
     const data = await resp.json();
     if (!resp.ok) {
       setStatus('tags-status', 'err', '⚠ ' + data.error);
@@ -1330,7 +1330,7 @@ async function generateTags() {
   setStatus('tags-status', 'idle', 'Генерируем tags_to_load.xlsx…');
 
   try {
-    const resp = await fetch('/api/tags', { method: 'POST', body: fd });
+    const resp = await fetch('api/tags', { method: 'POST', body: fd });
     if (!resp.ok) {
       const err = await resp.json();
       setStatus('tags-status', 'err', '⚠ ' + (err.error || 'Ошибка сервера'));
@@ -1352,7 +1352,7 @@ async function generateTags() {
 
 async function loadSettings() {
   try {
-    const resp = await fetch('/api/settings');
+    const resp = await fetch('api/settings');
     appSettings = await resp.json();
     renderDevTypes();
     renderTagTypes();
@@ -1465,7 +1465,7 @@ async function runFormulaTest(inp) {
   const ad      = inp.value.trim();
   if (!formula || !ad) { outEl.textContent = ''; return; }
   try {
-    const resp = await fetch('/api/test-formula', {
+    const resp = await fetch('api/test-formula', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ formula, ad }),
@@ -1547,7 +1547,7 @@ async function saveSettings() {
     tag_types:    collectTagTypes(),
   };
   try {
-    const resp = await fetch('/api/settings', {
+    const resp = await fetch('api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -1566,9 +1566,9 @@ async function saveSettings() {
 async function resetSettings() {
   if (!confirm('Сбросить все настройки к умолчаниям?')) return;
   try {
-    const resp = await fetch('/api/defaults');
+    const resp = await fetch('api/defaults');
     const defaults = await resp.json();
-    await fetch('/api/settings', {
+    await fetch('api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
