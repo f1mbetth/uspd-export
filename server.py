@@ -5,7 +5,7 @@
 Откроет http://localhost:5000 в браузере автоматически.
 """
 
-import io, json, os, sys, threading, webbrowser
+import io, json, os, shutil, subprocess, sys, tempfile, threading, time, traceback, webbrowser
 from collections import Counter
 import pandas as pd
 from flask import Flask, request, jsonify, send_file, send_from_directory
@@ -24,6 +24,10 @@ from core.tags_gen    import generate_tags, get_ids_col
 app = Flask(__name__, static_folder=_ROOT, static_url_path='')
 
 _settings = load_settings()
+
+UPDATE_REPO_URL = 'https://proxyapn.umxx.ru/git/fimbetth/uspd-export'
+SERVICE_NAME = 'uspd-export'
+UPDATE_LOG = os.path.join(_ROOT, 'logs', 'update.log')
 
 # ─── Статика ──────────────────────────────────────────────────────────────────
 
@@ -221,14 +225,131 @@ def api_tags():
 
 # ─── Перезапуск ───────────────────────────────────────────────────────────────
 
+def _write_update_log(message: str) -> None:
+    ts = time.strftime('%Y-%m-%d %H:%M:%S')
+    try:
+        os.makedirs(os.path.dirname(UPDATE_LOG), exist_ok=True)
+        with open(UPDATE_LOG, 'a', encoding='utf-8') as f:
+            f.write(f'[{ts}] {message}\n')
+    except Exception:
+        pass
+
+
+def _is_protected_update_path(rel_path: str) -> bool:
+    parts = rel_path.replace('\\', '/').split('/')
+    protected_dirs = {'.git', '__pycache__', 'venv', '.venv', 'env', 'logs'}
+    if any(p in protected_dirs for p in parts):
+        return True
+    name = parts[-1]
+    return name.endswith(('.pyc', '.pyo', '.xlsx', '.xls', '.tmp'))
+
+
+def _collect_source_paths(src_root: str) -> set[str]:
+    paths: set[str] = {'.'}
+    for root, dirs, files in os.walk(src_root):
+        rel_root = os.path.relpath(root, src_root)
+        dirs[:] = [
+            d for d in dirs
+            if not _is_protected_update_path(os.path.normpath(os.path.join(rel_root, d)))
+        ]
+        for d in dirs:
+            paths.add(os.path.normpath(os.path.join(rel_root, d)))
+        for fn in files:
+            rel = os.path.normpath(os.path.join(rel_root, fn))
+            if not _is_protected_update_path(rel):
+                paths.add(rel)
+    return paths
+
+
+def _sync_project_from(src_root: str, dst_root: str) -> None:
+    source_paths = _collect_source_paths(src_root)
+
+    for root, dirs, files in os.walk(src_root):
+        rel_root = os.path.relpath(root, src_root)
+        dirs[:] = [
+            d for d in dirs
+            if not _is_protected_update_path(os.path.normpath(os.path.join(rel_root, d)))
+        ]
+        dst_dir = dst_root if rel_root == '.' else os.path.join(dst_root, rel_root)
+        os.makedirs(dst_dir, exist_ok=True)
+        for fn in files:
+            rel = os.path.normpath(os.path.join(rel_root, fn))
+            if _is_protected_update_path(rel):
+                continue
+            shutil.copy2(os.path.join(root, fn), os.path.join(dst_root, rel))
+
+    for root, dirs, files in os.walk(dst_root, topdown=False):
+        rel_root = os.path.relpath(root, dst_root)
+        for fn in files:
+            rel = os.path.normpath(os.path.join(rel_root, fn))
+            if _is_protected_update_path(rel) or rel in source_paths:
+                continue
+            os.remove(os.path.join(dst_root, rel))
+        for d in dirs:
+            rel = os.path.normpath(os.path.join(rel_root, d))
+            if _is_protected_update_path(rel) or rel in source_paths:
+                continue
+            path = os.path.join(dst_root, rel)
+            try:
+                os.rmdir(path)
+            except OSError:
+                pass
+
+
+def _download_project_update() -> str:
+    temp_root = tempfile.mkdtemp(prefix='uspd-export-update-')
+    repo_dir = os.path.join(temp_root, 'repo')
+    try:
+        cmd = [
+            'git', '-c', 'http.sslVerify=false',
+            'clone', '--depth', '1', UPDATE_REPO_URL, repo_dir,
+        ]
+        proc = subprocess.run(
+            cmd,
+            cwd=temp_root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=180,
+            check=False,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stdout.strip() or f'git clone exited with {proc.returncode}')
+        _sync_project_from(repo_dir, _ROOT)
+        return proc.stdout.strip()
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
+def _restart_windows_service() -> None:
+    time.sleep(1.0)
+    cmd = f'Restart-Service {SERVICE_NAME}'
+    creationflags = (
+        getattr(subprocess, 'DETACHED_PROCESS', 0) |
+        getattr(subprocess, 'CREATE_NEW_PROCESS_GROUP', 0)
+    )
+    subprocess.Popen(
+        ['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', cmd],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        creationflags=creationflags,
+        close_fds=True,
+    )
+
 @app.route('/api/restart', methods=['POST'])
 def api_restart():
-    def do_restart():
-        import time
-        time.sleep(0.4)
-        os.execv(sys.executable, [sys.executable] + sys.argv)
-    threading.Thread(target=do_restart, daemon=True).start()
-    return jsonify({'ok': True})
+    try:
+        output = _download_project_update()
+        _write_update_log('Project updated from git')
+        if output:
+            _write_update_log(output)
+    except Exception as e:
+        _write_update_log('Update failed: ' + traceback.format_exc())
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+    threading.Thread(target=_restart_windows_service, daemon=True).start()
+    return jsonify({'ok': True, 'message': 'Project updated; service restart scheduled'})
 
 # ─── Запуск ───────────────────────────────────────────────────────────────────
 

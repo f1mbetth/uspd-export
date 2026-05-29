@@ -851,7 +851,7 @@ body {
       <div class="save-bar" id="save-bar">
         <button class="btn-primary" onclick="saveSettings()">Сохранить настройки</button>
         <button class="btn-danger" onclick="resetSettings()">Сбросить к умолчаниям</button>
-        <button class="btn-ghost" onclick="restartServer()" id="btn-restart" style="margin-left:auto">↺ Перезапустить сервер</button>
+        <button class="btn-ghost" onclick="restartServer()" id="btn-restart" style="margin-left:auto">↺ Обновить сервис</button>
       </div>
 
     </div><!-- /content -->
@@ -1605,29 +1605,42 @@ function esc(s) {
 async function restartServer() {
   const btn = document.getElementById('btn-restart');
   btn.disabled = true;
-  btn.textContent = '↺ Перезапуск…';
+  btn.textContent = '↺ Обновление…';
   try {
-    await fetch('api/restart', { method: 'POST' });
-  } catch { /* сервер перезапускается — ошибка сети ожидаема */ }
+    const resp = await fetch('api/restart', { method: 'POST' });
+    if (!resp.ok) {
+      const data = await resp.json().catch(() => ({}));
+      throw new Error(data.error || `HTTP ${resp.status}`);
+    }
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = '↺ Обновить сервис';
+    showToast('⚠ Обновление не выполнено: ' + e.message);
+    return;
+  }
 
   // Ждём пока сервер поднимется и пробуем reconnect
   let attempts = 0;
+  let sawDown = false;
+  btn.textContent = '↺ Ожидаю сервер…';
   const tryReconnect = setInterval(async () => {
     attempts++;
     try {
       const r = await fetch('api/settings');
-      if (r.ok) {
+      if (r.ok && (sawDown || attempts > 8)) {
         clearInterval(tryReconnect);
         btn.disabled = false;
-        btn.textContent = '↺ Перезапустить сервер';
-        showToast('✓ Сервер перезапущен');
+        btn.textContent = '↺ Обновить сервис';
+        showToast('✓ Проект обновлён, сервер перезапущен');
         await loadSettings();
       }
-    } catch { /* ещё не поднялся */ }
-    if (attempts > 30) {
+    } catch {
+      sawDown = true;
+    }
+    if (attempts > 60) {
       clearInterval(tryReconnect);
       btn.disabled = false;
-      btn.textContent = '↺ Перезапустить сервер';
+      btn.textContent = '↺ Обновить сервис';
       showToast('⚠ Сервер не ответил — проверьте вручную');
     }
   }, 500);
