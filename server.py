@@ -241,6 +241,8 @@ def _is_protected_update_path(rel_path: str) -> bool:
     if any(p in protected_dirs for p in parts):
         return True
     name = parts[-1]
+    if rel_path.replace('\\', '/') == 'config/settings.json':
+        return True
     return name.endswith(('.pyc', '.pyo', '.xlsx', '.xls', '.tmp'))
 
 
